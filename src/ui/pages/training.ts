@@ -4,7 +4,6 @@ import {
   FolderOpen,
   History,
   Play,
-  RotateCcw,
   Save,
   Scale,
   SkipForward,
@@ -26,6 +25,9 @@ import { liveStatus, populationStats, transport } from '../components/live';
 import { viewport } from '../components/viewport';
 import { fmt, h, setText } from '../dom';
 import { NetworkView, OUTPUT_LABELS } from '../render/networkView';
+
+/** The damaged-checkpoint warning is shown once per app session, not on every reload of the list. */
+let corruptWarned = false;
 
 const page: Page = (root) => {
   const cleanups: (() => void)[] = [];
@@ -79,7 +81,13 @@ const page: Page = (root) => {
     icon: Square,
     testId: 'train-stop',
     onClick: () =>
-      void controller.stop().then(() => toast('Training stopped. A checkpoint was saved.', 'success')),
+      void controller
+        .stop()
+        .then((saved) =>
+          saved
+            ? toast('Training stopped. A checkpoint was saved.', 'success')
+            : toast('Training stopped, but no checkpoint could be saved.', 'warning'),
+        ),
   });
   const nextBtn = button({
     label: 'Next generation',
@@ -87,30 +95,12 @@ const page: Page = (root) => {
     testId: 'train-next',
     onClick: () => controller.nextGeneration(),
   });
-  const resetBtn = button({
-    label: 'Reset',
-    icon: RotateCcw,
-    variant: 'ghost',
-    testId: 'train-reset',
-    onClick: async () => {
-      if (
-        !(await confirmAction(
-          'Reset training?',
-          'A new population is created at generation 0 as a new experiment. The current run is checkpointed first and stays in Analytics.',
-          { confirmLabel: 'Reset', danger: true },
-        ))
-      )
-        return;
-      await controller.start('train', { experimentName: nameField.input.value.trim() || undefined });
-      pendingNote.hidden = true;
-    },
-  });
   const saveCpBtn = button({
     label: 'Save checkpoint',
     icon: Save,
     variant: 'ghost',
     testId: 'train-save-cp',
-    onClick: () => void controller.saveCheckpoint('manual').then(loadCheckpoints),
+    onClick: () => void controller.saveCheckpoint('manual'),
   });
   const loadCpBtn = button({
     label: 'Load checkpoint',
@@ -139,7 +129,7 @@ const page: Page = (root) => {
   const controlsBar = h(
     'div',
     { class: 'toolbar toolbar-split' },
-    h('div', { class: 'toolbar', role: 'group', 'aria-label': 'Run' }, startBtn, stopBtn, nextBtn, resetBtn),
+    h('div', { class: 'toolbar', role: 'group', 'aria-label': 'Run' }, startBtn, stopBtn, nextBtn),
     h(
       'div',
       { class: 'toolbar', role: 'group', 'aria-label': 'Save and load' },
@@ -330,6 +320,7 @@ const page: Page = (root) => {
       value: g.autoCheckpointEvery,
       format: (v) => (v ? `${v} gen` : 'off'),
       onInput: (v) => edit((c) => (c.genetic.autoCheckpointEvery = v)),
+      testId: 'ga-autocheckpoint',
     }),
     h(
       'div',
@@ -339,26 +330,10 @@ const page: Page = (root) => {
   );
 
   // ---------- Architecture ----------
-  const archBody = h('div', { class: 'stack' });
-  const archInfo = () => {
-    const layers = networkLayers(cfg());
-    setText(archText, ` · ${layers.join(' → ')} · ${genomeLength(layers)} parameters`);
-  };
+  const neuronSliders = h('div', { class: 'stack' });
   const buildArch = () => {
-    const hidden = cfg().hiddenLayers;
-    archBody.replaceChildren(
-      slider({
-        label: 'Hidden layers',
-        min: 1,
-        max: 3,
-        step: 1,
-        value: hidden.length,
-        onInput: (v) => {
-          edit((c) => (c.hiddenLayers = Array.from({ length: v }, (_, i) => c.hiddenLayers[i] ?? 8)));
-          buildArch();
-        },
-      }),
-      ...hidden.map((n, i) =>
+    neuronSliders.replaceChildren(
+      ...cfg().hiddenLayers.map((n, i) =>
         slider({
           label: `Layer ${i + 1} neurons`,
           min: 1,
@@ -368,13 +343,35 @@ const page: Page = (root) => {
           onInput: (v) => edit((c) => (c.hiddenLayers[i] = v)),
         }),
       ),
-      h(
-        'p',
-        { class: 'field-hint' },
-        `Inputs = ${cfg().sensors.rayCount} sensor rays + speed (change rays in Simulation Studio). Outputs: throttle, left, right, brake. Hidden activation tanh, output sigmoid.`,
-      ),
     );
   };
+  const archInfo = () => {
+    const layers = networkLayers(cfg());
+    setText(archText, ` · ${layers.join(' → ')} · ${genomeLength(layers)} parameters`);
+  };
+  const archBody = h(
+    'div',
+    { class: 'stack' },
+    // Rebuilding this slider while it is dragged would drop the drag and keyboard focus.
+    slider({
+      label: 'Hidden layers',
+      min: 1,
+      max: 3,
+      step: 1,
+      value: cfg().hiddenLayers.length,
+      testId: 'arch-layers',
+      onInput: (v) => {
+        edit((c) => (c.hiddenLayers = Array.from({ length: v }, (_, i) => c.hiddenLayers[i] ?? 8)));
+        buildArch();
+      },
+    }),
+    neuronSliders,
+    h(
+      'p',
+      { class: 'field-hint' },
+      `Inputs = ${cfg().sensors.rayCount} sensor rays + speed (change rays in Simulation Studio). Outputs: throttle, left, right, brake. Hidden activation tanh, output sigmoid.`,
+    ),
+  );
   buildArch();
   archInfo();
   const archPanel = panel('Network architecture', { icon: BrainCircuit }, archBody);
@@ -405,7 +402,18 @@ const page: Page = (root) => {
 
   // ---------- Checkpoints ----------
   const cpList = h('div', { class: 'list', 'data-testid': 'checkpoint-list' });
-  const cpPanel = panel('Checkpoints', { icon: History, subtitle: 'restore previous sessions' }, cpList);
+  const cpUsage = h('span', { class: 'panel-sub', 'data-testid': 'checkpoint-usage' });
+  const cpPanel = panel(
+    'Checkpoints',
+    { icon: History },
+    cpList,
+    h(
+      'p',
+      { class: 'field-hint' },
+      `Auto checkpoints are kept for the ${db.AUTO_CHECKPOINT_EXPERIMENTS} most recent experiments. Manual checkpoints are only deleted by you.`,
+    ),
+  );
+  cpPanel.querySelector('.panel-title')!.append(cpUsage);
   let checkpoints: CheckpointRecord[] = [];
   const loadCheckpoint = async (c: CheckpointRecord) => {
     if (
@@ -424,14 +432,34 @@ const page: Page = (root) => {
     try {
       const res = await db.getAll('checkpoints');
       checkpoints = res.items.sort((a, b) => b.createdAt - a.createdAt);
-      if (res.corrupt.length)
+      if (res.corrupt.length && !corruptWarned) {
+        corruptWarned = true;
         toast(
           `${res.corrupt.length} damaged checkpoint(s) were skipped. You can remove them in Settings → Data.`,
           'warning',
         );
+      }
     } catch (err) {
       toast((err as Error).message, 'error');
     }
+    renderCheckpoints();
+  }
+  const onCheckpoint = () => {
+    const c = controller.lastCheckpoint;
+    if (!c) return;
+    // Mirrors db.saveAutoCheckpoint: one auto checkpoint per experiment.
+    const replaced = (x: CheckpointRecord) =>
+      c.kind === 'auto' && x.kind === 'auto' && x.experimentId === c.experimentId;
+    checkpoints = [c, ...checkpoints.filter((x) => !replaced(x))];
+    renderCheckpoints();
+  };
+  const renderUsage = async () => {
+    const est = await db.storageEstimate().catch(() => null);
+    const used = est ? ` · ${(est.usage / 1024 / 1024).toFixed(1)} MB used` : '';
+    setText(cpUsage, `${checkpoints.length} stored${used}`);
+  };
+  function renderCheckpoints(): void {
+    void renderUsage();
     if (!checkpoints.length) {
       cpList.replaceChildren(
         emptyState(
@@ -472,8 +500,13 @@ const page: Page = (root) => {
                   ))
                 )
                   return;
-                await db.remove('checkpoints', c.id).catch((e: Error) => toast(e.message, 'error'));
-                void loadCheckpoints();
+                try {
+                  await db.remove('checkpoints', c.id);
+                  checkpoints = checkpoints.filter((x) => x !== c);
+                  renderCheckpoints();
+                } catch (e) {
+                  toast((e as Error).message, 'error');
+                }
               },
             }),
           ),
@@ -487,13 +520,13 @@ const page: Page = (root) => {
     if (!checkpoints.length) return toast('No checkpoints saved yet.', 'info');
     const list = h('div', { class: 'list' });
     const chosen = await new Promise<CheckpointRecord | null>((resolve) => {
-      let pick: CheckpointRecord | null = null;
+      let pick: CheckpointRecord | null = checkpoints[0] ?? null;
       for (const c of checkpoints)
         list.append(
           h(
             'label',
             { class: 'list-item check-item' },
-            h('input', { type: 'radio', name: 'cp', onchange: () => (pick = c) }),
+            h('input', { type: 'radio', name: 'cp', checked: c === pick, onchange: () => (pick = c) }),
             h(
               'div',
               { class: 'grow' },
@@ -568,7 +601,9 @@ const page: Page = (root) => {
   cleanups.push(
     controller.on('status', sync),
     controller.on('session', sync),
-    controller.on('generation', () => void loadCheckpoints()),
+    controller.on('checkpoint', onCheckpoint),
+    // A new run may have pruned old auto checkpoints.
+    controller.on('session', () => void loadCheckpoints()),
   );
   sync();
   updateNet();

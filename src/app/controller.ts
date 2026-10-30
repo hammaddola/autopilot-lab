@@ -33,7 +33,8 @@ export interface PerfStats {
 
 /**
  * Main-thread owner of the simulation worker. Pages read state from here and subscribe to events:
- * 'frame' (new snapshot), 'status', 'generation', 'results', 'config', 'session'.
+ * 'frame' (new snapshot), 'status', 'generation', 'checkpoint' (after one is stored), 'results', 'config',
+ * 'session'.
  */
 export class SimController extends EventTarget {
   /** Draft configuration edited by the UI; applied when a session starts. */
@@ -51,6 +52,8 @@ export class SimController extends EventTarget {
   manualCrash: string | null = null;
   lastError: string | null = null;
   trainingStartedAt = 0;
+  /** Most recently stored checkpoint, set just before the 'checkpoint' event. */
+  lastCheckpoint: CheckpointRecord | null = null;
   readonly perf: PerfStats = { fps: 0, renderMs: 0, stepsPerSecond: 0, workerMs: 0, vehicles: 0 };
 
   private worker: Worker | null = null;
@@ -59,6 +62,7 @@ export class SimController extends EventTarget {
   private pending = new Map<number, (s: TrainingState | null) => void>();
   private lastInput = '';
   private storageWarned = false;
+  private starting: Promise<void> | null = null;
 
   private emit(type: string): void {
     this.dispatchEvent(new Event(type));
@@ -89,8 +93,16 @@ export class SimController extends EventTarget {
     this.emit('status');
   }
 
-  /** Starts a new session in the given mode (terminating any previous one). */
-  async start(mode: SimMode, opts: StartOptions = {}): Promise<void> {
+  /**
+   * Starts a new session in the given mode (terminating any previous one). Calls made while a start is
+   * still awaiting storage are ignored, so a double-click cannot spawn two workers or two experiments.
+   */
+  start(mode: SimMode, opts: StartOptions = {}): Promise<void> {
+    this.starting ??= this.doStart(mode, opts).finally(() => (this.starting = null));
+    return this.starting;
+  }
+
+  private async doStart(mode: SimMode, opts: StartOptions): Promise<void> {
     // Leaving a training run: checkpoint it first so the best driver is never lost.
     if (this.mode === 'train' && this.worker) await this.saveCheckpoint('auto', true);
     this.terminate();
@@ -148,6 +160,7 @@ export class SimController extends EventTarget {
         return;
       }
     }
+    await db.pruneAutoCheckpoints().catch(() => 0);
     const now = Date.now();
     this.experiment = {
       id: opts.checkpoint?.experimentId ?? newId(),
@@ -312,12 +325,16 @@ export class SimController extends EventTarget {
     await this.start(this.mode, opts);
   }
 
-  /** Stops the session. Training state is checkpointed first so the best driver is never lost. */
-  async stop(): Promise<void> {
-    if (this.mode === 'train' && this.worker) await this.saveCheckpoint('auto', true);
+  /**
+   * Stops the session. Training state is checkpointed first so the best driver is never lost.
+   * Resolves to whether a checkpoint was stored.
+   */
+  async stop(): Promise<boolean> {
+    const saved = this.mode === 'train' && !!this.worker && (await this.saveCheckpoint('auto', true));
     this.terminate();
     this.setStatus('idle');
     this.emit('session');
+    return saved;
   }
 
   private terminate(): void {
@@ -357,6 +374,8 @@ export class SimController extends EventTarget {
     try {
       if (kind === 'auto') await db.saveAutoCheckpoint(record);
       else await db.add('checkpoints', record);
+      this.lastCheckpoint = record;
+      this.emit('checkpoint');
       return record;
     } catch (err) {
       this.storageFailed(err as Error);

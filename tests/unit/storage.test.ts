@@ -124,3 +124,27 @@ describe('database', () => {
     await expect(db.importBackup('{"format":"other"}')).rejects.toThrow(/not an Autopilot Lab backup/);
   });
 });
+
+describe('checkpoint pruning', () => {
+  it('keeps auto checkpoints of the newest experiments and never prunes manual ones', async () => {
+    const cfg = defaultConfig();
+    cfg.genetic.populationSize = 10;
+    const state = new Session({ mode: 'train', config: cfg }).exportState();
+    const cp = (id: string, experimentId: string, createdAt: number, kind: 'auto' | 'manual') =>
+      db.add('checkpoints', {
+        id,
+        experimentId,
+        experimentName: experimentId,
+        createdAt,
+        kind,
+        generation: 0,
+        config: cfg,
+        state,
+      });
+    for (let i = 0; i < 5; i++) await cp(`a${i}`, `e${i}`, i, 'auto');
+    await cp('m0', 'e0', 0, 'manual');
+    expect(await db.pruneAutoCheckpoints(2)).toBe(3);
+    const ids = (await db.getAll('checkpoints')).items.map((c) => c.id).sort();
+    expect(ids).toEqual(['a3', 'a4', 'm0']);
+  });
+});

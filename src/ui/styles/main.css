@@ -340,6 +340,7 @@ textarea {
 }
 .lab-grid {
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  align-items: start;
 }
 
 /* ============ Panels ============ */
@@ -1058,8 +1059,7 @@ kbd {
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   border: 1px solid var(--border);
-  overflow-x: auto;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 /* ============ Network view ============ */
@@ -1419,20 +1419,15 @@ kbd {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* 44px minimum touch targets (WCAG 2.5.5 / platform guidelines). */
 @media (pointer: coarse) {
-  .btn {
-    height: 40px;
-  }
-  .btn-icon {
-    width: 40px;
-  }
-  .btn-sm {
-    height: 34px;
-  }
-  .btn-sm.btn-icon {
-    width: 34px;
-  }
+  .btn,
+  .btn-sm,
   .segment {
-    height: 34px;
+    height: 44px;
+  }
+  .btn-icon,
+  .btn-sm.btn-icon {
+    width: 44px;
   }
 }

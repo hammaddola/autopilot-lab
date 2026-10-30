@@ -179,6 +179,49 @@ export async function saveAutoCheckpoint(c: CheckpointRecord): Promise<void> {
   await txDone(tx);
 }
 
+/** Auto-checkpoints are kept for this many most recent experiments; manual ones are never pruned. */
+export const AUTO_CHECKPOINT_EXPERIMENTS = 10;
+
+/**
+ * Deletes auto-checkpoints of all but the `keep` most recently checkpointed experiments.
+ * Returns how many were removed.
+ */
+export async function pruneAutoCheckpoints(keep = AUTO_CHECKPOINT_EXPERIMENTS): Promise<number> {
+  const db = await openDb();
+  const tx = db.transaction('checkpoints', 'readwrite');
+  const s = tx.objectStore('checkpoints');
+  // shortcut: the cursor deserialises every checkpoint once; fine per new run, move genomes to their own store if this grows slow.
+  const autos: { id: string; experimentId: string; createdAt: number }[] = [];
+  let removed = 0;
+  const cursorReq = s.openCursor();
+  cursorReq.onsuccess = () => {
+    const cur = cursorReq.result;
+    if (!cur) {
+      const latest = new Map<string, number>();
+      for (const a of autos)
+        latest.set(a.experimentId, Math.max(latest.get(a.experimentId) ?? 0, a.createdAt));
+      const kept = new Set(
+        [...latest]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, keep)
+          .map(([id]) => id),
+      );
+      for (const a of autos)
+        if (!kept.has(a.experimentId)) {
+          s.delete(a.id);
+          removed++;
+        }
+      return;
+    }
+    const v = cur.value as Partial<CheckpointRecord>;
+    if (v.kind === 'auto' && typeof v.id === 'string' && typeof v.experimentId === 'string')
+      autos.push({ id: v.id, experimentId: v.experimentId, createdAt: Number(v.createdAt) || 0 });
+    cur.continue();
+  };
+  await txDone(tx);
+  return removed;
+}
+
 // ---------- Backups ----------
 
 export const BACKUP_FORMAT = 'autopilot-lab/backup';
