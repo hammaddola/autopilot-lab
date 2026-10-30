@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Offline · Autopilot Lab</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #0b1220;
+        color: #e5ecf5;
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+        text-align: center;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 16px 0 6px;
+      }
+      p {
+        color: #93a3b8;
+        max-width: 420px;
+        margin: 0 auto 18px;
+      }
+      button {
+        background: #1fae5b;
+        color: #03150a;
+        border: 0;
+        border-radius: 7px;
+        padding: 10px 16px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="./icons/icon.svg" width="64" height="64" alt="" />
+      <h1>You're offline</h1>
+      <p>
+        Autopilot Lab hasn't finished caching for offline use yet. Reconnect once and open the app; after that
+        it works without a network. Your saved drivers and experiments are stored on this device and are safe.
+      </p>
+      <button onclick="location.reload()">Try again</button>
+    </main>
+  </body>
+</html>
