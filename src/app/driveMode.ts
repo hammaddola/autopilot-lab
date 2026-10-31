@@ -5,6 +5,8 @@ import { prefs } from './preferences';
 // state survives page changes (e.g. Dashboard → Studio).
 let maximized = false;
 let views = 0;
+/** Set when we exit fullscreen ourselves, so its (possibly late) event isn't read as the user leaving. */
+let selfExit = false;
 
 export const isMaximized = (): boolean => maximized;
 
@@ -15,7 +17,10 @@ export function setMaximized(on: boolean): void {
   document.documentElement.classList.toggle('vp-max', on);
   // Fullscreen needs a recent user gesture; if refused, the view still fills the window.
   if (on) void document.documentElement.requestFullscreen?.({ navigationUI: 'hide' }).catch(() => {});
-  else if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+  else if (document.fullscreenElement) {
+    selfExit = true;
+    void document.exitFullscreen().catch(() => (selfExit = false));
+  }
   window.dispatchEvent(new Event('viewportmax'));
 }
 
@@ -36,8 +41,11 @@ export function trackView(): () => void {
 // Manual driving can start before its page has mounted a view (Dashboard → "Drive manually").
 let pending = false;
 
+// Leaving browser fullscreen by the user (Esc, system gesture) also leaves drive mode.
 document.addEventListener('fullscreenchange', () => {
-  if (!document.fullscreenElement) setMaximized(false);
+  if (document.fullscreenElement) return;
+  if (selfExit) selfExit = false;
+  else setMaximized(false);
 });
 // Auto-maximize only when entering manual mode, so a restart after leaving full screen stays windowed.
 let lastMode: string | null = null;
