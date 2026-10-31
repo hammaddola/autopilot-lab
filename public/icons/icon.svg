@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#0b1220"/>
-  <path d="M176 448 L232 64 M336 448 L280 64" stroke="#2d3e5c" stroke-width="20" stroke-linecap="round"/>
-  <path d="M256 96 v56 M256 200 v56 M256 304 v56" stroke="#e5ecf5" stroke-width="12" stroke-linecap="round" opacity=".55"/>
-  <rect x="211" y="250" width="90" height="150" rx="22" fill="#1fae5b"/>
-  <rect x="225" y="278" width="62" height="26" rx="6" fill="#03150a" opacity=".55"/>
+  <rect width="512" height="512" rx="112" fill="#160f30"/>
+  <path d="M176 448 L232 64 M336 448 L280 64" stroke="#473c75" stroke-width="20" stroke-linecap="round"/>
+  <path d="M256 96 v56 M256 200 v56 M256 304 v56" stroke="#f6f4ff" stroke-width="12" stroke-linecap="round" opacity=".55"/>
+  <rect x="211" y="250" width="90" height="150" rx="22" fill="#aa97fd"/>
+  <rect x="225" y="278" width="62" height="26" rx="6" fill="#160f30" opacity=".55"/>
   <path d="M256 250 L176 120 M256 250 L256 96 M256 250 L336 120" stroke="#22c3e6" stroke-width="10" stroke-linecap="round" opacity=".9"/>
   <circle cx="176" cy="120" r="14" fill="#22c3e6"/><circle cx="256" cy="96" r="14" fill="#22c3e6"/><circle cx="336" cy="120" r="14" fill="#22c3e6"/>
 </svg>

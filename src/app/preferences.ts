@@ -77,7 +77,7 @@ export function resolveQuality(q: Quality): ResolvedQuality {
 export function applyTheme(theme: Theme): void {
   const dark = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b1220' : '#f4f6f9');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#160f30' : '#f4f6f9');
   window.dispatchEvent(new Event('themechange'));
 }
 

@@ -12,45 +12,47 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #0b1220;
-  --surface: #101929;
-  --surface-2: #152035;
-  --surface-3: #1b2840;
-  --border: #1f2c43;
-  --border-strong: #2d3e5c;
-  --text: #e5ecf5;
-  --text-muted: #93a3b8;
-  --text-faint: #5d6d85;
-  --accent: #1fae5b;
-  --accent-strong: #26c568;
-  --accent-ink: #03150a;
-  --accent-soft: #1fae5b1f;
+  --bg: #160f30;
+  --surface: #1e1640;
+  --surface-2: #241b4a;
+  --surface-3: #2b2157;
+  --border: #33295e;
+  --border-strong: #473c75;
+  --text: #f6f4ff;
+  --text-body: #bdb6d8;
+  --text-muted: #bdb6d8;
+  --text-faint: #9f97bf;
+  --accent: #aa97fd;
+  --accent-strong: #bcadfe;
+  --accent-ink: #160f30;
+  --accent-soft: #aa97fd24;
   --accent-2: #22c3e6;
-  --danger: #ef5b5b;
+  --success: #3ddc84;
+  --danger: #ff6b7a;
   --warn: #f2b33d;
-  --shadow: 0 1px 2px #0006, 0 6px 20px -12px #000c;
-  --chart-grid: #1f2c4380;
-  --weight-pos: #1fae5b;
-  --weight-neg: #ef6b5b;
-  --series-1: #1fae5b;
+  --shadow: 0 1px 2px #0a061a99, 0 6px 20px -12px #0a061acc;
+  --chart-grid: #33295e99;
+  --weight-pos: #3ddc84;
+  --weight-neg: #ff6b7a;
+  --series-1: #aa97fd;
   --series-2: #22c3e6;
-  --series-3: #8b9cf7;
+  --series-3: #3ddc84;
   --series-4: #f2b33d;
-  --series-5: #c084fc;
-  --series-6: #ef5b5b;
-  --sim-ground: #0c1424;
-  --sim-ground-alt: #0f1a2c;
-  --sim-road: #1c2535;
-  --sim-lane: #c7d1de;
-  --sim-edge: #e5ecf5;
-  --sim-marker: #3b4c68;
-  --sim-tree: #12301f;
-  --sim-building: #18233a;
-  --traffic-1: #8b9cf7;
-  --traffic-2: #c7d1de;
-  --traffic-3: #e48f6b;
-  --traffic-4: #b394f0;
-  --traffic-truck: #6f7f99;
+  --series-5: #f472b6;
+  --series-6: #ff6b7a;
+  --sim-ground: #130d2a;
+  --sim-ground-alt: #170f33;
+  --sim-road: #2a2150;
+  --sim-lane: #bdb6d8;
+  --sim-edge: #f6f4ff;
+  --sim-marker: #473c75;
+  --sim-tree: #1d3a34;
+  --sim-building: #2b2157;
+  --traffic-1: #5fb3f9;
+  --traffic-2: #d9d4ee;
+  --traffic-3: #f0916b;
+  --traffic-4: #f472b6;
+  --traffic-truck: #7d74a3;
 }
 
 :root[data-theme='light'] {
@@ -62,20 +64,22 @@
   --border: #dde3ec;
   --border-strong: #c3ccd9;
   --text: #0f1a2b;
+  --text-body: #0f1a2b;
   --text-muted: #546275;
   --text-faint: #8a96a8;
-  --accent: #0b8a45;
-  --accent-strong: #0a7a3d;
+  --accent: #6d4fe0;
+  --accent-strong: #5b3fcc;
   --accent-ink: #ffffff;
-  --accent-soft: #0b8a4514;
+  --accent-soft: #6d4fe014;
   --accent-2: #0891b2;
+  --success: #0b8a45;
   --danger: #d33d3d;
   --warn: #c98a0e;
   --shadow: 0 1px 2px #0f1a2b14, 0 8px 24px -16px #0f1a2b40;
   --chart-grid: #dde3ec;
   --weight-pos: #0b8a45;
   --weight-neg: #d6453d;
-  --series-1: #0b8a45;
+  --series-1: #6d4fe0;
   --series-2: #0891b2;
   --series-3: #5b6ee1;
   --series-4: #c98a0e;
@@ -92,7 +96,7 @@
   --traffic-1: #5b6ee1;
   --traffic-2: #e8ecf2;
   --traffic-3: #d9774e;
-  --traffic-4: #9b51e0;
+  --traffic-4: #d6458f;
   --traffic-truck: #2b3445;
 }
 
@@ -109,10 +113,23 @@ body {
 }
 body {
   background: var(--bg);
-  color: var(--text);
+  color: var(--text-body);
   font: 14px/1.5 var(--font);
   -webkit-font-smoothing: antialiased;
   font-feature-settings: 'cv11', 'ss01', 'tnum';
+}
+h1,
+h2,
+h3,
+strong,
+.stat-value,
+.list-title,
+.field-label,
+.hud-big {
+  color: var(--text);
+}
+a:not(.btn, .nav-link, .brand, .skip-link) {
+  color: var(--accent);
 }
 h1,
 h2,
@@ -278,7 +295,7 @@ textarea {
   flex: none;
 }
 .run-dot[data-state='running'] {
-  background: var(--accent);
+  background: var(--success);
 }
 .run-dot[data-state='paused'] {
   background: var(--warn);
@@ -780,11 +797,11 @@ input[type='range']:disabled {
   background: var(--text-faint);
 }
 .status-running {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
 }
 .status-running .status-dot {
-  background: var(--accent);
+  background: var(--success);
   animation: pulse 1.6s ease-in-out infinite;
 }
 .status-paused .status-dot {
@@ -913,7 +930,7 @@ html.vp-max {
   border: 1px solid var(--border);
 }
 .hud-chip[data-tone='ok'] {
-  color: var(--accent);
+  color: var(--success);
 }
 .hud-chip[data-tone='bad'] {
   color: var(--danger);
