@@ -1,11 +1,13 @@
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, RotateCcw } from 'lucide';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Maximize2, Minimize2, RotateCcw } from 'lucide';
 import { controller } from '../../app/controller';
+import { isMaximized, setMaximized, trackView } from '../../app/driveMode';
 import { prefs, resolveQuality } from '../../app/preferences';
 import { UNIT_TO_KMH } from '../../simulation/config';
 import { HIT_LABELS } from '../../simulation/sensor';
 import { fmt, h, icon, setText } from '../dom';
 import { SimRenderer } from '../render/renderer';
-import { button } from './button';
+import { button, setButton } from './button';
+import { transport } from './live';
 
 const MODE_LABEL = { train: 'Training', test: 'Testing', manual: 'Manual' } as const;
 const STATUS_LABEL: Record<string, string> = {
@@ -129,16 +131,44 @@ export function viewport(o: { height?: string; compact?: boolean } = {}): Viewpo
     ),
   );
 
+  const maxBtn = button({
+    label: 'Full screen',
+    icon: Maximize2,
+    iconOnly: true,
+    testId: 'vp-maximize',
+    onClick: () => setMaximized(!isMaximized()),
+  });
+  const maxTransport = transport({ minimal: true });
+  const tools = h('div', { class: 'vp-tools' }, maxTransport.el, maxBtn);
+
   const el = h(
     'div',
-    { class: `viewport${o.compact ? ' compact' : ''}`, style: o.height ? `height:${o.height}` : undefined },
+    {
+      class: `viewport${o.compact ? ' compact' : ''}`,
+      style: o.height ? `height:${o.height}` : undefined,
+      'data-testid': 'viewport',
+    },
     canvas,
     idle,
     hud,
     perf,
     banner,
     controls,
+    tools,
   );
+  const syncMax = () => {
+    const maximized = isMaximized();
+    el.classList.toggle('maximized', maximized);
+    maxTransport.el.hidden = !maximized;
+    setButton(
+      maxBtn,
+      maximized ? 'Exit full screen (Esc)' : 'Full screen (F)',
+      maximized ? Minimize2 : Maximize2,
+    );
+  };
+  window.addEventListener('viewportmax', syncMax);
+  const untrack = trackView();
+  syncMax();
 
   const applyPrefs = () => {
     renderer.setQuality(resolveQuality(prefs.quality));
@@ -219,7 +249,10 @@ export function viewport(o: { height?: string; compact?: boolean } = {}): Viewpo
       window.removeEventListener('keyup', onKey);
       window.removeEventListener('blur', onBlur);
       window.removeEventListener('prefschange', applyPrefs);
+      window.removeEventListener('viewportmax', syncMax);
+      maxTransport.destroy();
       keys.clear();
+      untrack();
     },
   };
 }

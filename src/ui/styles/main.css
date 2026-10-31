@@ -816,6 +816,65 @@ input[type='range']:disabled {
   touch-action: none;
   user-select: none;
 }
+/* Drive mode: the view fills the window (toasts at z 50 and dialogs stay above it). */
+.viewport.maximized {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  height: auto !important;
+  border: 0;
+  border-radius: 0;
+}
+html.vp-max {
+  overflow: hidden;
+}
+/* Narrow drive mode: icon-only buttons; the label stays available to screen readers. */
+@media (max-width: 520px) {
+  .vp-tools .btn {
+    width: 44px;
+    padding: 0;
+  }
+  .vp-tools .btn > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+.vp-tools {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 55%;
+}
+.vp-tools .btn {
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(6px);
+}
+.vp-tools .btn-primary {
+  background: var(--accent);
+}
+.viewport.maximized .hud,
+.viewport.maximized .vp-tools {
+  top: calc(12px + env(safe-area-inset-top));
+}
+.viewport.maximized .touch-controls {
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+}
+.viewport.maximized .pad {
+  width: 76px;
+  height: 76px;
+}
+.viewport.maximized .pad-throttle {
+  height: 96px;
+}
 .sim-canvas {
   display: block;
   width: 100%;
@@ -885,7 +944,7 @@ input[type='range']:disabled {
 .perf {
   position: absolute;
   right: 10px;
-  top: 10px;
+  top: 54px;
   max-width: calc(100% - 20px);
   font: 11px/1.4 var(--mono);
   padding: 4px 8px;
@@ -1398,6 +1457,12 @@ kbd {
   }
   .content {
     padding: 16px 16px 96px;
+  }
+  .page-head h1 {
+    font-size: 19px;
+  }
+  .page-sub {
+    font-size: 13px;
   }
   .toast-region {
     bottom: 84px;

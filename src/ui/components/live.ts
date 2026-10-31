@@ -36,13 +36,13 @@ export function liveStatus(): { el: HTMLElement; destroy(): void } {
   return { el: pill, destroy: () => (off(), off2()) };
 }
 
-/** Play/pause, step, restart and speed controls. */
-export function transport(): { el: HTMLElement; destroy(): void } {
+/** Play/pause, step, restart and speed controls. `minimal` keeps only play/pause and restart. */
+export function transport(o: { minimal?: boolean } = {}): { el: HTMLElement; destroy(): void } {
   const playBtn = button({
     label: 'Pause',
     icon: Pause,
     variant: 'primary',
-    testId: 'play-pause',
+    testId: o.minimal ? 'vp-play-pause' : 'play-pause',
     onClick: () => (controller.status === 'running' ? controller.pause() : controller.play()),
   });
   const stepBtn = button({
@@ -56,7 +56,7 @@ export function transport(): { el: HTMLElement; destroy(): void } {
     label: 'Restart',
     icon: RotateCcw,
     iconOnly: true,
-    testId: 'restart',
+    testId: o.minimal ? 'vp-restart' : 'restart',
     onClick: async () => {
       if (
         controller.mode === 'train' &&
@@ -93,7 +93,14 @@ export function transport(): { el: HTMLElement; destroy(): void } {
   const offs = [controller.on('status', sync), controller.on('session', sync)];
   sync();
   return {
-    el: h('div', { class: 'transport' }, playBtn, stepBtn, restartBtn, speed),
+    el: h(
+      'div',
+      { class: 'transport' },
+      playBtn,
+      o.minimal ? null : stepBtn,
+      restartBtn,
+      o.minimal ? null : speed,
+    ),
     destroy: () => offs.forEach((f) => f()),
   };
 }

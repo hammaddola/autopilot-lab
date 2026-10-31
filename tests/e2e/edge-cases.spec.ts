@@ -85,3 +85,12 @@ test('damaged checkpoint warning is shown once, and Load works without picking',
   await expect(page.getByText(/Resumed/)).toBeVisible();
   await expect(page.getByTestId('run-status')).toContainText('Running');
 });
+
+test('full screen when driving can be turned off in Settings', async ({ page }) => {
+  await page.goto('/#/settings');
+  await page.getByTestId('toggle-maximize').click();
+  await page.goto('/#/studio');
+  await page.getByTestId('mode').getByText('Manual').click();
+  await expect(page.getByTestId('run-status')).toContainText('Running');
+  await expect(page.getByTestId('viewport')).not.toHaveClass(/maximized/);
+});

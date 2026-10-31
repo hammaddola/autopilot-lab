@@ -84,6 +84,13 @@ const page: Page = (root) => {
       'toggle-perf',
     ),
     toggle('Show sensor rays', prefs.showSensors, (v) => updatePreferences({ showSensors: v })),
+    toggle(
+      'Full screen when driving',
+      prefs.maximizeDriving,
+      (v) => updatePreferences({ maximizeDriving: v }),
+      'Manual driving opens in full screen. Press F to toggle, Esc to leave.',
+      'toggle-maximize',
+    ),
   );
 
   // ---------- Physics ----------

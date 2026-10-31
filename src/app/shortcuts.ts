@@ -2,12 +2,15 @@ import { openDialog } from '../ui/components/feedback';
 import { h } from '../ui/dom';
 import { SPEEDS } from '../workers/protocol';
 import { controller } from './controller';
+import { isMaximized, setMaximized } from './driveMode';
 
 const HELP: [string[], string][] = [
   [['Space'], 'Pause / resume'],
   [['N'], 'Step one frame (while paused)'],
   [['R'], 'Restart run (manual and test modes)'],
   [['1', '2', '3', '4'], 'Speed 1× / 2× / 5× / 10×'],
+  [['F'], 'Full screen on / off'],
+  [['Esc'], 'Leave full screen'],
   [['W', 'A', 'S', 'D'], 'Drive (manual mode; arrow keys also work)'],
   [['?'], 'Show this help'],
 ];
@@ -32,6 +35,14 @@ export function initShortcuts(): void {
     if (t.closest('input, textarea, select, [contenteditable], dialog')) return;
     // Space already activates a focused button or link.
     if (e.code === 'Space' && t.closest('button, a, [role="radio"]')) return;
+    if (e.key === 'Escape' && isMaximized()) {
+      setMaximized(false);
+      return;
+    }
+    if (e.code === 'KeyF') {
+      setMaximized(!isMaximized());
+      return;
+    }
     if (e.key === '?') {
       e.preventDefault();
       void showShortcuts();

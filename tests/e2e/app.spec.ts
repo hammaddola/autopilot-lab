@@ -37,6 +37,13 @@ test('manual driving responds to the keyboard and reports collisions', async ({ 
   await page.getByTestId('quick-manual').click();
   await expect(page.getByRole('heading', { level: 1, name: 'Simulation Studio' })).toBeVisible();
   await expect(page.getByTestId('sim-canvas')).toBeVisible();
+  // Manual driving opens in drive mode (full window); Esc leaves it, F re-enters.
+  const vp = page.getByTestId('viewport');
+  await expect(vp).toHaveClass(/maximized/);
+  await page.keyboard.press('Escape');
+  await expect(vp).not.toHaveClass(/maximized/);
+  await page.keyboard.press('KeyF');
+  await expect(vp).toHaveClass(/maximized/);
   await page.keyboard.down('ArrowUp');
   await expect.poll(() => speedOf(page), { timeout: 5000 }).toBeGreaterThan(30);
   // Hold full throttle and steer into the road border: the crash banner must appear.
@@ -46,6 +53,9 @@ test('manual driving responds to the keyboard and reports collisions', async ({ 
   await page.keyboard.up('ArrowUp');
   await page.keyboard.press('KeyR');
   await expect(page.getByTestId('crash-banner')).toBeHidden();
+  await expect(vp).toHaveClass(/maximized/); // a restart keeps drive mode as it was
+  await page.getByTestId('vp-maximize').click();
+  await expect(vp).not.toHaveClass(/maximized/);
   expect(errors).toEqual([]);
 });
 

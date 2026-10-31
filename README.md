@@ -34,7 +34,7 @@ experiments, and take the wheel yourself — on desktop or phone, online or offl
 | **Sensors**           | 1–16 rays (default 7), 50–500 range (default 170), 10–300° field of view (default 108°). Live debug view (origin, rays, hit points coloured by object type) and a per-ray table: angle, normalised reading, distance, detected object.                                                                                                                |
 | **Neural network**    | From-scratch feed-forward net, configurable hidden layers (1–3 × 1–32), tanh hidden / sigmoid outputs, reproducible init, validated (de)serialisation. Live visualisation: weights coloured by sign, width by magnitude, node activation, hover tooltips, live output bars and current decision.                                                      |
 | **Genetic algorithm** | Population 10–400 (default 120), best-ever preservation, elitism, tournament selection, uniform crossover, Gaussian mutation (rate 0–0.5), adaptive mutation driven by measured diversity and stagnation, configurable weighted fitness, crash and stall elimination, auto-advancing generations. Runs in a Web Worker.                               |
-| **Modes**             | **Train AI** · **Test drivers** (one or several saved drivers on the same scenario, follow any of them, results recorded as benchmarks) · **Manual driving** (arrows/WASD or on-screen touch pedals, collision feedback).                                                                                                                             |
+| **Modes**             | **Train AI** · **Test drivers** (one or several saved drivers on the same scenario, follow any of them, results recorded as benchmarks) · **Manual driving** (arrows/WASD or on-screen touch pedals, collision feedback, opens in full-screen drive mode).                                                                                            |
 | **Analytics**         | Live dashboard (generation, alive, eliminated, best/avg distance, best/avg fitness, avg speed, collisions, survival, training time, mutation rate, diversity). Six Chart.js charts with axis titles and tooltips, experiment comparison overlay + config table, benchmark history, CSV/JSON export. Empty states everywhere — no placeholder numbers. |
 | **Driver library**    | Save, name, describe, version, preview network, test, duplicate, delete (confirmed), export/import JSON with schema version and strict validation.                                                                                                                                                                                                    |
 | **Persistence**       | IndexedDB (drivers, experiments with full generation history, checkpoints, benchmarks), versioned with migrations; auto + manual checkpoints; resume after reload; backup export/import; corrupt-record detection and repair.                                                                                                                         |
@@ -51,8 +51,10 @@ All screenshots are of real runs (`scripts/screenshots.ts` starts training and c
 | ![Dashboard](docs/screenshots/dashboard.png)      | ![Analytics](docs/screenshots/analytics.png)                                           |
 | **Simulation Studio — testing a saved driver**    | **Driver Library**                                                                     |
 | ![Studio](docs/screenshots/studio-test.png)       | ![Library](docs/screenshots/driver-library.png)                                        |
-| **Light theme**                                   | **Mobile — manual driving with touch pedals**                                          |
-| ![Light](docs/screenshots/training-lab-light.png) | <img src="docs/screenshots/mobile-manual.png" width="260" alt="Mobile manual driving"> |
+| **Drive mode — manual driving fills the screen**  | **Mobile — drive mode with touch pedals**                                              |
+| ![Drive mode](docs/screenshots/studio-manual.png) | <img src="docs/screenshots/mobile-manual.png" width="260" alt="Mobile manual driving"> |
+| **Light theme**                                   |                                                                                        |
+| ![Light](docs/screenshots/training-lab-light.png) |                                                                                        |
 
 ## Keyboard shortcuts
 
@@ -64,6 +66,7 @@ Press <kbd>?</kbd> anywhere (or the keyboard icon in the sidebar) for the in-app
 | <kbd>N</kbd>                                                 | Step one frame while paused            |
 | <kbd>R</kbd>                                                 | Restart the run (manual and test mode) |
 | <kbd>1</kbd> – <kbd>4</kbd>                                  | Speed 1× / 2× / 5× / 10×               |
+| <kbd>F</kbd> / <kbd>Esc</kbd>                                | Enter / leave full-screen drive mode   |
 | <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / arrows | Drive (manual mode)                    |
 
 Training restarts are deliberately not bound to a key — they go through the confirm dialog.

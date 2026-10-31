@@ -10,6 +10,8 @@ export interface Preferences {
   quality: Quality;
   showSensors: boolean;
   showPerf: boolean;
+  /** Fill the screen when manual driving starts. */
+  maximizeDriving: boolean;
   reducedMotion: 'system' | 'on' | 'off';
 }
 
@@ -20,6 +22,7 @@ const DEFAULTS: Preferences = {
   quality: 'auto',
   showSensors: true,
   showPerf: false,
+  maximizeDriving: true,
   reducedMotion: 'system',
 };
 
@@ -49,6 +52,7 @@ export function loadPreferences(): Preferences {
       : DEFAULTS.quality,
     showSensors: typeof p.showSensors === 'boolean' ? p.showSensors : DEFAULTS.showSensors,
     showPerf: typeof p.showPerf === 'boolean' ? p.showPerf : DEFAULTS.showPerf,
+    maximizeDriving: typeof p.maximizeDriving === 'boolean' ? p.maximizeDriving : DEFAULTS.maximizeDriving,
     reducedMotion:
       p.reducedMotion === 'on' || p.reducedMotion === 'off' ? p.reducedMotion : DEFAULTS.reducedMotion,
   };

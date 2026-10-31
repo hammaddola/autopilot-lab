@@ -23,6 +23,10 @@ test('mobile layout: bottom navigation, no horizontal scroll, touch pedals drive
   await page.goto('/#/studio');
   await page.getByTestId('mode').getByText('Manual').click();
   await expect(page.getByTestId('touch-controls')).toBeVisible();
+  // Drive mode covers the whole screen, bottom navigation included.
+  const vb = (await page.getByTestId('viewport').boundingBox())!;
+  expect(vb.width).toBeGreaterThanOrEqual(vp.width - 1);
+  expect(vb.height).toBeGreaterThanOrEqual(vp.height - 1);
   const throttle = page.getByTestId('pad-up');
   const b = (await throttle.boundingBox())!;
   await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2);
